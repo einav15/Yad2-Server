@@ -2,9 +2,9 @@ const Listings = require('../models/listingModel')
 const express = require('express')
 const router = new express.Router()
 
-const getOnlyFive = (list, date) => {
+const getOnlyFive = (list, date, last) => {
     const data = [...list]
-    const ret = data.filter(d => d.updatedAt <= date).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5)
+    const ret = data.filter(d => (d.updatedAt <= date) && (d._id != last?._id)).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5)
     return ret
 }
 
@@ -32,11 +32,13 @@ router.patch('/listing/:id', async (req, res) => {
 })
 
 router.get('/listings', async (req, res) => {
-    const dateFrom = req.body.laterThan ? new Date(req.body.laterThan) : new Date()
+    const last = req.query.last ? JSON.parse(req.query.last) : null
+    const dateFrom = last ? new Date(last.updatedAt) : new Date()
+    const filters = req.query.filters ? JSON.parse(req.query.filters) : {}
     try {
-        const list = await Listings.find({})
-        const data = getOnlyFive(list, dateFrom)
-        res.send(data)
+        const list = await Listings.find(filters)
+        const data = getOnlyFive(list, dateFrom, last)
+        res.send({ data, length: list.length })
     } catch (err) {
         res.status(500).send(err)
     }
@@ -53,11 +55,25 @@ router.get('/listing/:id', async (req, res) => {
 })
 
 router.get('/listings/advanced', async (req, res) => {
-    const title = req.query.title
+    const { address, assetTypes, numOfRooms, priceRange, advancedSearchOptions } = JSON.parse(req.query.filters)
+    let propertyType, city, street, number, floorNum
+    const checkBoxes = {}
+    for (const [key, value] of Object.entries(advancedSearchOptions.checkBoxes)) {
+        if (value)
+            checkBoxes[key] = true
+    }
     try {
         const listings = await Listings.find({
-            "title": { $regex: new RegExp(title, "g") },
-            "price": { $gte: price[0], $lt: price[1] },
+
+            // propertyType: assetTypes,
+            // city: address.city || "",
+            // street: address.street || "",
+            // "address.floorNum": { $gte: advancedSearchOptions.floors[0], $lt: advancedSearchOptions.floors[1] },
+            "propertyInfo.numOfRooms": { $gte: numOfRooms[0], $lt: (numOfRooms[1] === 0 ? 100 : numOfRooms[1] + 1) },
+            // "propertyInfo.freeText": { $regex: new RegExp(advancedSearchOptions.freeText, "g") },
+            //"payments.actualSize": { $gte: advancedSearchOptions.size[0], $lt: (advancedSearchOptions.size[1] == -1 ? Infinity : advancedSearchOptions.size[1]) },
+
+            // entryDate: advancedSearchOptions.entryDate
         })
         if (!listings)
             return res.status(404).send()
@@ -67,6 +83,42 @@ router.get('/listings/advanced', async (req, res) => {
     }
 
 })
+
+
+// payments: {
+//     numOfPayments: {
+//         type: String
+//     },
+//     buildingFee: {
+//         type: Number
+//     },
+//     arnona: {
+//         type: Number
+//     },
+//     size: {
+//         type: Number
+//     },
+//     actualSize: {
+//         type: Number
+//     },
+//     price: {
+//         type: Number
+//     },
+//     entryDate: {
+//         type: Date
+//     }
+// },
+// mediaUrls: {
+//     video: {
+//         type: String
+//     },
+//     mainImg: {
+//         type: String
+//     },
+//     images: [{
+//         type: String
+//     }]
+// },
 
 router.delete('/listing', async (req, res) => {
     try {
