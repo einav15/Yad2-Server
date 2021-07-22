@@ -15,10 +15,10 @@ const listingSchema = new mongoose.Schema({
             type: String
         },
         floorNum: {
-            type: String
+            type: Number
         },
         floorsInBuilding: {
-            type: String
+            type: Number
         },
     },
     propertyInfo: {
@@ -31,9 +31,9 @@ const listingSchema = new mongoose.Schema({
         porch: {
             type: Number
         },
-        properties: {
-            type: Object
-        },
+        properties: [{
+            type: String
+        }],
         freeText: {
             type: String
         },

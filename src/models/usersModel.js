@@ -76,6 +76,13 @@ usersSchema.statics.findByCredentials = async (email, pass) => {
 
     return user
 }
+
+//cookie-login
+usersSchema.statics.findByCookie = async (token) => {
+    const user = await User.findOne({ "tokens": { $elemMatch: { token: token.token } } })
+    return user
+}
+
 //hash password
 usersSchema.pre('save', async function (next) {
     const user = this

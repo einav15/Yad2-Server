@@ -26,6 +26,17 @@ router.post('/users/login', async (req, res) => {
     }
 })
 
+router.post('/users/login-cookie', async (req, res) => {
+    const token = req.body
+    try {
+        const user = await User.findByCookie(token)
+        res.send({ user })
+    } catch (err) {
+        console.log(err)
+        res.status(400).send(err)
+    }
+})
+
 router.post('/users/check-email', async (req, res) => {
     const email = req.body.email
     try {
@@ -51,6 +62,7 @@ router.post('/users/logout', auth, async (req, res) => {
         res.status(500).send(err)
     }
 })
+
 
 router.post('/users/logoutAll', auth, async (req, res) => {
     try {

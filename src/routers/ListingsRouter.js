@@ -1,10 +1,20 @@
 const Listings = require('../models/listingModel')
 const express = require('express')
 const router = new express.Router()
+const { getFilters } = require('../auxFunc')
 
-const getOnlyFive = (list, date, last) => {
+const getOnlyFive = (list, date, included) => {
     const data = [...list]
-    const ret = data.filter(d => (d.updatedAt <= date) && (d._id != last?._id)).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5)
+    const makeSureNotIncuded = (id) => {
+        if (included)
+            for (let i = 0; i < included.length; i++) {
+                if (id == included[i]) {
+                    return false
+                }
+            }
+        return true
+    }
+    const ret = data.filter(d => (d.updatedAt <= date && makeSureNotIncuded(d._id)))?.sort((a, b) => b.updatedAt - a.updatedAt)?.slice(0, 5)
     return ret
 }
 
@@ -24,7 +34,8 @@ router.patch('/listing/:id', async (req, res) => {
     const updates = req.body
     const _id = req.params.id
     try {
-        const data = await Listings.findOneAndUpdate({ _id }, updates)
+        const old = await Listings.findOne({ _id })
+        const data = await Listings.findOneAndUpdate({ _id }, { propertyInfo: { ...old._doc.propertyInfo, ...updates } })
         res.send(data)
     } catch (e) {
         console.log(e)
@@ -33,11 +44,12 @@ router.patch('/listing/:id', async (req, res) => {
 
 router.get('/listings', async (req, res) => {
     const last = req.query.last ? JSON.parse(req.query.last) : null
+    const included = req.query.included || null
     const dateFrom = last ? new Date(last.updatedAt) : new Date()
     const filters = req.query.filters ? JSON.parse(req.query.filters) : {}
     try {
         const list = await Listings.find(filters)
-        const data = getOnlyFive(list, dateFrom, last)
+        const data = getOnlyFive(list, dateFrom, included)
         res.send({ data, length: list.length })
     } catch (err) {
         res.status(500).send(err)
@@ -55,70 +67,21 @@ router.get('/listing/:id', async (req, res) => {
 })
 
 router.get('/listings/advanced', async (req, res) => {
-    const { address, assetTypes, numOfRooms, priceRange, advancedSearchOptions } = JSON.parse(req.query.filters)
-    let propertyType, city, street, number, floorNum
-    const checkBoxes = {}
-    for (const [key, value] of Object.entries(advancedSearchOptions.checkBoxes)) {
-        if (value)
-            checkBoxes[key] = true
-    }
+    const last = req.query.last ? JSON.parse(req.query.last) : null
+    const included = req.query.included || null
+    const dateFrom = last ? new Date(last.updatedAt) : new Date()
+    const filters = getFilters(req.query.filters)
+
     try {
-        const listings = await Listings.find({
-
-            // propertyType: assetTypes,
-            // city: address.city || "",
-            // street: address.street || "",
-            // "address.floorNum": { $gte: advancedSearchOptions.floors[0], $lt: advancedSearchOptions.floors[1] },
-            "propertyInfo.numOfRooms": { $gte: numOfRooms[0], $lt: (numOfRooms[1] === 0 ? 100 : numOfRooms[1] + 1) },
-            // "propertyInfo.freeText": { $regex: new RegExp(advancedSearchOptions.freeText, "g") },
-            //"payments.actualSize": { $gte: advancedSearchOptions.size[0], $lt: (advancedSearchOptions.size[1] == -1 ? Infinity : advancedSearchOptions.size[1]) },
-
-            // entryDate: advancedSearchOptions.entryDate
-        })
-        if (!listings)
-            return res.status(404).send()
-        res.status(200).send(listings)
+        const list = await Listings.find(filters)
+        const data = getOnlyFive(list, dateFrom, included)
+        res.send({ data, length: list.length })
     } catch (err) {
         res.status(500).send(err)
     }
 
 })
 
-
-// payments: {
-//     numOfPayments: {
-//         type: String
-//     },
-//     buildingFee: {
-//         type: Number
-//     },
-//     arnona: {
-//         type: Number
-//     },
-//     size: {
-//         type: Number
-//     },
-//     actualSize: {
-//         type: Number
-//     },
-//     price: {
-//         type: Number
-//     },
-//     entryDate: {
-//         type: Date
-//     }
-// },
-// mediaUrls: {
-//     video: {
-//         type: String
-//     },
-//     mainImg: {
-//         type: String
-//     },
-//     images: [{
-//         type: String
-//     }]
-// },
 
 router.delete('/listing', async (req, res) => {
     try {
