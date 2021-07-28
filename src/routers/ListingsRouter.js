@@ -34,37 +34,36 @@ router.patch('/listing/:id', async (req, res) => {
     const updates = req.body
     const _id = req.params.id
     try {
-        const old = await Listings.findOne({ _id })
-        const data = await Listings.findOneAndUpdate({ _id }, { propertyInfo: { ...old._doc.propertyInfo, ...updates } })
+        const data = await Listings.findOneAndUpdate({ _id }, updates)
         res.send(data)
     } catch (e) {
         console.log(e)
     }
 })
 
-router.get('/listings', async (req, res) => {
-    const last = req.query.last ? JSON.parse(req.query.last) : null
-    const included = req.query.included || null
-    const dateFrom = last ? new Date(last.updatedAt) : new Date()
-    const filters = req.query.filters ? JSON.parse(req.query.filters) : {}
-    try {
-        const list = await Listings.find(filters)
-        const data = getOnlyFive(list, dateFrom, included)
-        res.send({ data, length: list.length })
-    } catch (err) {
-        res.status(500).send(err)
-    }
-})
+// router.get('/listings', async (req, res) => {
+//     const last = req.query.last ? JSON.parse(req.query.last) : null
+//     const included = req.query.included || null
+//     const dateFrom = last ? new Date(last.updatedAt) : new Date()
+//     const filters = req.query.filters ? JSON.parse(req.query.filters) : {}
+//     try {
+//         const list = await Listings.find(filters)
+//         const data = getOnlyFive(list, dateFrom, included)
+//         res.send({ data, length: list.length })
+//     } catch (err) {
+//         res.status(500).send(err)
+//     }
+// })
 
-router.get('/listing/:id', async (req, res) => {
-    const _id = req.params.id
-    try {
-        const data = await Listings.findOne({ _id })
-        res.send(data)
-    } catch (err) {
-        res.status(500).send(err)
-    }
-})
+// router.get('/listing/:id', async (req, res) => {
+//     const _id = req.params.id
+//     try {
+//         const data = await Listings.findOne({ _id })
+//         res.send(data)
+//     } catch (err) {
+//         res.status(500).send(err)
+//     }
+// })
 
 router.get('/listings/advanced', async (req, res) => {
     const last = req.query.last ? JSON.parse(req.query.last) : null

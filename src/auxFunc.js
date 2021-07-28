@@ -1,24 +1,11 @@
-const getCheckBoxes = (input) => {
-    const checkBoxes = []
-    for (const [key, value] of Object.entries(input)) {
-        if (value)
-            checkBoxes.push(key)
-    }
-    return checkBoxes
-}
+const getArrays = (input) => {
 
-const getAssetTypes = (input) => {
-    const listItems = [
-        "דירה", "דירת גן", "גג/פנטהאוז", "דופלקס", "דירת נופש", "מרתף/פרטר", "טריפלקס", "יחידת דיור", "החלפת דירות", "סאבלט", "סטודיו/לופט",
-        "בית פרטי/קוטג", "דו משפחתי", "משק חקלאי/נחלה", "משק עזר",
-        "מגרשים", "דיור מוגן", "בניין מגורים", "מחסן", "חניה", "קב' רכישה / זכות לנכס", "כללי"
-    ]
-    const types = []
+    const ret = []
     for (const [key, value] of Object.entries(input)) {
         if (value)
-            types.push(key)
+            ret.push(key)
     }
-    return types
+    return ret
 }
 
 const getEntryDate = (input) => {
@@ -29,7 +16,6 @@ const getEntryDate = (input) => {
     else
         date = null
     return date
-
 }
 
 const getPriceRange = (input) => {
@@ -57,10 +43,9 @@ const getArea = (input) => {
 const getFilters = (filters) => {
     const { areaSearch, assetTypes, numOfRooms, PriceRange, advancedSearchOptions } = JSON.parse(filters)
 
-
     const area = getArea(areaSearch)
-    const types = getAssetTypes(assetTypes)
-    const checkBoxes = getCheckBoxes(advancedSearchOptions.checkBoxes)
+    const types = getArrays(assetTypes)
+    const checkBoxes = getArrays(advancedSearchOptions.checkBoxes)
     const entryDate = getEntryDate(advancedSearchOptions.entryDate)
     const price = getPriceRange(PriceRange)
 
